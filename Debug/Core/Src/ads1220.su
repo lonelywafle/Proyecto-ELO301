@@ -1,0 +1,7 @@
+../Core/Src/ads1220.c:14:6:ADS1220_Init	16	static
+../Core/Src/ads1220.c:23:6:ADS1220_Select	8	static
+../Core/Src/ads1220.c:28:6:ADS1220_Deselect	8	static
+../Core/Src/ads1220.c:32:6:ADS1220_READ_REG	24	static
+../Core/Src/ads1220.c:43:6:ADS1220_WRITE_REG	24	static
+../Core/Src/ads1220.c:53:6:ADS1220_SendCommand	16	static
+../Core/Src/ads1220.c:59:6:ADS1220_ReadData	24	static
