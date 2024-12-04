@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
 #include "ads1220.h"
+#include "math.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -32,7 +33,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define N 1000  // Numero de muestras para calcular la sumatoria
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -46,7 +47,8 @@ SPI_HandleTypeDef hspi1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-
+uint16_t adc_buffer[N];  // ADC buffer to store samples
+float valor_rms;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -54,6 +56,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_SPI1_Init(void);
+void calcular_rms();
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -61,6 +64,23 @@ static void MX_SPI1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+
+void calcular_rms() {
+
+	float suma_cuadrados = 0.0f;
+
+    // Se hace la suma acomulada de cuadrados
+    for (int i = 0; i < N; i++) {
+        float current = (float)(adc_buffer[i]); // Revisar si es necesario centrar en cero ( - 2048, o algun otro numero)
+        suma_cuadrados += current * current;
+    }
+
+    // Se divide la suma por el numero de muestras
+    float mean_square = suma_cuadrados / N;
+
+    // Se calcula la raiz cuadrada para obtener rms
+    valor_rms = sqrtf(mean_square);
+}
 /* USER CODE END 0 */
 
 /**
@@ -73,6 +93,7 @@ int main(void)
   char uart_buf[50];
   int uart_buf_len;
   char spi_buf[20];
+  uint16_t sample_counter = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -143,11 +164,19 @@ int main(void)
   while (1)
   {
 	  ADS1220_ReadData(&conversionResult);
-
-	  uart_buf_len=sprintf(uart_buf,"Data read: 0x%02X \r\n",conversionResult);
+	  //uart_buf_len=sprintf(uart_buf,"Data read: 0x%02X \r\n",conversionResult);
+	  uart_buf_len=sprintf(uart_buf,"RMS Data: 0x%02X \r\n",(int32_t)valor_rms);
 	  HAL_UART_Transmit(&huart2, (uint8_t *)uart_buf, uart_buf_len, 100);
 
-	  HAL_Delay(1000);
+	  if(sample_counter < N) {
+		  adc_buffer[sample_counter] = conversionResult;
+		  sample_counter++;
+	  } else {
+		  calcular_rms();
+		  sample_counter = 0;
+	  }
+	  // enviar valor_rms a la pantalla
+	  HAL_Delay(10);
 
     /* USER CODE END WHILE */
 
